@@ -1,0 +1,53 @@
+import torch
+from torch import nn, optim
+from prepare import make_splits, Splits, make_loaders
+from model import BikeNet
+
+def train_epoch(model, dataloader, loss_fn, optimizer):
+    """Trains the model for one full pass over the training dataloader."""
+    model.train()
+    total_loss = 0.0
+    for xb, yb in dataloader:
+        optimizer.zero_grad()       # Clear gradients from previous step
+        preds = model(xb)           # Forward pass
+        loss = loss_fn(preds, yb)   # Compute batch loss
+        loss.backward()             # Backward pass (gradients)
+        optimizer.step()            # Update model weights
+        total_loss += loss.item() * len(xb)
+    return total_loss / len(dataloader.dataset)
+
+
+def evaluate(model, dataloader, loss_fn):
+    """Evaluates model loss on validation or test sets without tracking gradients."""
+    model.eval()
+    total_loss = 0.0
+    with torch.no_grad():
+        for xb, yb in dataloader:
+            preds = model(xb)
+            loss = loss_fn(preds, yb)
+            total_loss += loss.item() * len(xb)
+    return total_loss / len(dataloader.dataset)
+
+
+def train(epochs: int = 10, lr: float = 1e-2):
+    """Main training function managing splits, loaders, optimization, and logging."""
+    splits = Splits(*make_splits(2026))
+    train_loader, val_loader, _ = make_loaders(splits, batch_size=64)
+
+    model = BikeNet(splits.n_features, hidden=16)
+    loss_fn = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+
+    print(f"Starting training for {epochs} epochs...")
+    for epoch in range(1, epochs + 1):
+        train_loss = train_epoch(model, train_loader, loss_fn, optimizer)
+        val_loss = evaluate(model, val_loader, loss_fn)
+        print(f"Epoch {epoch:3d} | Train MSE: {train_loss:.4f} | Val MSE: {val_loss:.4f}")
+
+    return model
+
+
+if __name__ == "__main__":
+    # Short run first to verify per-epoch loss printing
+    print("--- Short Run (5 Epochs) ---")
+    train(epochs=5, lr=1e-2)

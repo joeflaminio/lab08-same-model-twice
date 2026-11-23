@@ -29,3 +29,6 @@ From running `python compare.py`:
 ## 4. Key Takeaways
 - **Identical function at identical weights**: Before training, copying PyTorch weights into Keras reproduces the forward pass within single-precision floating-point tolerance (`2.98e-08`).
 - **Different training trajectories over 30 epochs**: Even with matching architecture, MSE loss, Adam optimizer, and learning rate (`1e-2`), the two runs reached different test errors (`124.0944` MSE / `7.5677` MAE in PyTorch vs. `62.0911` MSE / `5.2327` MAE in Keras). Differences in random initialization, mini-batch ordering/shuffling, and optimizer/backend execution details can steer gradient-based optimization along distinct paths over multiple epochs.
+
+## 4. Reproducibility & Fresh-Clone Verification
+Verified `ruff format --check .`, `ruff check .`, `pytest`, `train.py`, `train_keras.py`, and `compare.py` from a fresh clone, with artifacts written to `reports/`.
